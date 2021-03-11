@@ -17,6 +17,7 @@ open class TableViewDataSource<Provider: CollectionDataProvider, Cell: UITableVi
 {
     // MARK: - Delegates
     public var loadFromBottom: (()-> Void)?
+    var delegate: ItemsOrderChangedDelegate?
 
     // MARK: - Private Properties
     let provider: Provider
@@ -94,6 +95,23 @@ open class TableViewDataSource<Provider: CollectionDataProvider, Cell: UITableVi
 //            loadFromBottom?()
 //        }
 //    }
+    
+    public func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .none
+    }
+    
+    public func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        return false
+    }
+    
+    public func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        if let movedObject = provider.item(at: sourceIndexPath) {
+            provider.removeItem(at: sourceIndexPath)
+            provider.insertItem(at: destinationIndexPath, value: movedObject)
+            self.delegate?.itemsOrderChanged(provider: provider as Any)
+            print("Object moved: \(movedObject)")
+        }
+    }
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offSetY = scrollView.contentOffset.y

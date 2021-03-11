@@ -25,6 +25,8 @@ class NoteModel: Codable {
         case userName
     }
     
+    init() {}
+    
     required init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         itemId = try values.decodeIfPresent(Int64.self, forKey: .itemId)

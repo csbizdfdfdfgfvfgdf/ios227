@@ -33,4 +33,8 @@ open class CollectionArrayDataSource<T, Cell: UICollectionViewCell>: CollectionD
     public func removeItem(at indexPath: IndexPath) {
         provider.removeItem(at: indexPath)
     }
+    
+    public func insertItem(at indexPath: IndexPath, value: T) {
+        provider.insertItem(at: indexPath, value: value)
+    }
 }

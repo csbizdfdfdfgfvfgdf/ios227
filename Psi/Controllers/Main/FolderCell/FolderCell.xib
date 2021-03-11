@@ -65,7 +65,7 @@
                 </constraints>
             </tableViewCellContentView>
             <viewLayoutGuide key="safeArea" id="njF-e1-oar"/>
-            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <color key="backgroundColor" name="CellColor"/>
             <connections>
                 <outlet property="arrawIV" destination="BJp-Uw-vHp" id="hI5-We-EGu"/>
                 <outlet property="titleLabel" destination="UUb-ml-KSd" id="sRM-zT-3eP"/>

@@ -118,7 +118,9 @@ extension FolderListViewModel {
         }
     }
     
-    func moveFolder(at newIndex: Int?, parentFolderID: Int64?, successCallBack: @escaping SuccessListener<[FolderViewModel]>) {
+    func moveFolder(at newIndex: Int?, parentFolderID: Int64?, array: [[Any]]?, successCallBack: @escaping SuccessListener<[FolderViewModel]>, updatedArray: @escaping ([[Any]]?)->Void) {
+        var array = array ?? []
+//    func moveFolder(at newIndex: Int?, parentFolderID: Int64?, successCallBack: @escaping SuccessListener<[FolderViewModel]>) {
 
         guard var cutFolder = AppManager.shared.selectedFolder else {
             return
@@ -134,8 +136,35 @@ extension FolderListViewModel {
         if newIndex == nil {
             updatedFolders.append(cutFolder)
         } else {
+            if let newIndex = newIndex, newIndex > updatedFolders.count {
+                let ind = updatedFolders.count
+                updatedFolders.insert(cutFolder, at: ind)
+            } else {
             updatedFolders.insert(cutFolder, at: newIndex!)
+            }
         }
+        
+        var arrayFolderList: [FolderViewModel] = []
+        for arr in array {
+            for ar in arr {
+                if let folder = ar as? FolderViewModel {
+                    arrayFolderList.append(folder)
+                } else {
+                    arrayFolderList.append(FolderViewModel())
+                }
+            }
+        }
+        let index = array.count > 1 ? 1 : 0
+        if let cuttedFolderIndex = arrayFolderList.firstIndex(where: {$0.folderId == cutFolder.folderId}) {
+            array[index].remove(at: cuttedFolderIndex)
+        }
+        
+        if newIndex == nil {
+            array[index].append(cutFolder)
+        } else {
+            array[index].insert(cutFolder, at: newIndex!)
+        }
+        
 //
 //        // If User is not signin then Move Folder from local DB
 //        if AppManager.shared.user == nil {
@@ -161,6 +190,7 @@ extension FolderListViewModel {
 //                    return
 //                }
                 successCallBack(foldersList.map(FolderViewModel.init).sorted())
+                updatedArray(array)
             case .failure(let error):
                 self.indecatorDelegate?.didStop(withError: error.localizedDescription)
             }

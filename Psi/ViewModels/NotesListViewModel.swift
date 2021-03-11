@@ -145,7 +145,9 @@ extension NotesListViewModel {
         }
     }
     
-    func moveNote(at newIndex: Int?, toFolderId: Int64?, successCallBack: @escaping SuccessListener<[NoteViewModel]>) {
+//    func moveNote(at newIndex: Int?, toFolderId: Int64?, successCallBack: @escaping SuccessListener<[NoteViewModel]>) {
+    func moveNote(at newIndex: Int?, toFolderId: Int64?, array: [[Any]]?, successCallBack: @escaping SuccessListener<[NoteViewModel]>, updatedArray: @escaping ([[Any]]?)->Void) {
+        var array = array ?? []
         
         guard var cutNote = AppManager.shared.selectedNote else {
             return
@@ -172,8 +174,35 @@ extension NotesListViewModel {
         if newIndex == nil {
             updatedNotes.append(cutNote)
         } else {
+            if let newIndex = newIndex, newIndex > updatedNotes.count {
+                let ind = updatedNotes.count
+                updatedNotes.insert(cutNote, at: ind)
+            } else {
             updatedNotes.insert(cutNote, at: newIndex!)
+            }
         }
+        
+        var arrayNoteList: [NoteViewModel] = []
+        for arr in array {
+            for ar in arr {
+                if let folder = ar as? NoteViewModel {
+                    arrayNoteList.append(folder)
+                } else {
+                    arrayNoteList.append(NoteViewModel())
+                }
+            }
+        }
+        let index = array.count > 1 ? 1 : 0
+        if let cuttedNoteIndex = arrayNoteList.firstIndex(where: {$0.itemId == cutNote.itemId}) {
+            array[index].remove(at: cuttedNoteIndex)
+        }
+        
+        if newIndex == nil {
+            array[index].append(cutNote)
+        } else {
+            array[index].insert(cutNote, at: newIndex!)
+        }
+        
         indecatorDelegate?.didStartIndecator()
         
         NetworkManager.shared.genericMethodCall(target: .updateNote(list: updatedNotes)/*(content: cutNote.content, folderId: toFolderId, noteId: cutNote.itemId, orderId: 0)*/) { (result: Result<[NoteModel], Swift.Error>) in
@@ -183,6 +212,7 @@ extension NotesListViewModel {
             
             case .success(let notes):
                 successCallBack(notes.map(NoteViewModel.init).sorted())
+                updatedArray(array)
             case .failure(let error):
                 self.indecatorDelegate?.didStop(withError: error.localizedDescription)
             }

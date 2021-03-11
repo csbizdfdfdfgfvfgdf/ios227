@@ -60,15 +60,14 @@ extension NoteDetailVC {
 
 // MARK: - CreateOrUpdateNoteVCDelegate
 extension NoteDetailVC: CreateOrUpdateNoteVCDelegate {
-
-    func noteCreated(_ notes: [NoteViewModel]) {}
+    func noteCreated(_ notes: [NoteViewModel], newlyAdded: [NoteViewModel]) {}
     
-    func noteUpdated(_ notes: [NoteViewModel]) {
+    func noteUpdated(_ notes: [NoteViewModel], newlyAdded: NoteViewModel) {
         
         if let note = notes.first(where: {$0.itemId == self.noteVM.itemId}) {
             self.textView.text = note.content
         }
-        self.delegate?.noteUpdated(notes)
+        self.delegate?.noteUpdated(notes, newlyAdded: newlyAdded)
     }
     
     func deleteNote(_ noteVM: NoteViewModel) {}

@@ -8,8 +8,8 @@
 import UIKit
 
 protocol CreateOrUpdateNoteVCDelegate {
-    func noteCreated(_ notes: [NoteViewModel])
-    func noteUpdated(_ notes: [NoteViewModel])
+    func noteCreated(_ notes: [NoteViewModel], newlyAdded: [NoteViewModel])
+    func noteUpdated(_ notes: [NoteViewModel], newlyAdded: NoteViewModel)
     func deleteNote(_ noteVM: NoteViewModel)
 }
 
@@ -83,7 +83,7 @@ extension CreateOrUpdateNoteVC {
         notesListVM.createNote(note: noteVM) { notesList in
             var notes = self.notesListVM.notesList
             notes.append(contentsOf: notesList)
-            self.delegate?.noteCreated(notes)
+            self.delegate?.noteCreated(notes, newlyAdded: notesList)
             self.navigationController?.popViewController(animated: true)
         }
     }
@@ -92,7 +92,7 @@ extension CreateOrUpdateNoteVC {
         let noteVM = NoteViewModel(content: textView.text!, pId: folderId, itemId: noteData!.itemId, orderId: noteData?.orderId)
         notesListVM.indecatorDelegate = self
         notesListVM.updateNote(note: noteVM) { notes in
-            self.delegate?.noteUpdated(notes)
+            self.delegate?.noteUpdated(notes, newlyAdded: noteVM)
             self.navigationController?.popViewController(animated: true)
         }
     }

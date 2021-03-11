@@ -20,14 +20,22 @@ public class ArrayDataProvider<T>: CollectionDataProvider {
     
     // MARK: - CollectionDataProvider
     public func numberOfSections() -> Int {
-        return items.count
+//        return items.count
+        return 1
     }
     
     public func numberOfItems(in section: Int) -> Int {
-        guard section >= 0 && section < items.count else {
-            return 0
+//        guard section >= 0 && section < items.count else {
+//            return 0
+//        }
+//        return items[section].count
+        if items.count > 1 {
+            return items[0].count+items[1].count
+        } else if items.count > 0 {
+            return items[0].count
         }
-        return items[section].count
+        return 0
+//        return items[0].count+items[1].count
     }
     
     public func item(at indexPath: IndexPath) -> T? {
@@ -36,9 +44,12 @@ public class ArrayDataProvider<T>: CollectionDataProvider {
             indexPath.row >= 0 &&
             indexPath.row < items[indexPath.section].count else
         {
-            return nil
+            let index = indexPath.row - items[0].count
+            return items[1][index]
+//            return nil
         }
-        return items[indexPath.section][indexPath.row]
+        return items[0][indexPath.row]
+//        return items[indexPath.section][indexPath.row]
     }
     
     public func updateItem(at indexPath: IndexPath, value: T) {
@@ -47,9 +58,12 @@ public class ArrayDataProvider<T>: CollectionDataProvider {
             indexPath.row >= 0 &&
             indexPath.row < items[indexPath.section].count else
         {
+            let index = indexPath.row - items[0].count
+            items[1][index] = value
             return
         }
-        items[indexPath.section][indexPath.row] = value
+        items[0][indexPath.row] = value
+//        items[indexPath.section][indexPath.row] = value
     }
     
     public func removeItem(at indexPath: IndexPath) {
@@ -58,9 +72,29 @@ public class ArrayDataProvider<T>: CollectionDataProvider {
             indexPath.row >= 0 &&
             indexPath.row < items[indexPath.section].count else
         {
+            let index = indexPath.row - items[0].count
+            items[1].remove(at: index)
             return
         }
-        
-        items[indexPath.section].remove(at: indexPath.row)
+        items[0].remove(at: indexPath.row)
+//        items[indexPath.section].remove(at: indexPath.row)
+    }
+    
+    public func insertItem(at indexPath: IndexPath, value: T) {
+        guard indexPath.section >= 0 &&
+            indexPath.section < items.count &&
+            indexPath.row >= 0 &&
+            indexPath.row < items[indexPath.section].count else
+        {
+            let index = indexPath.row - items[0].count
+            if items.count > 1 {
+            items[1].insert(value, at: index)
+            } else {
+                items[0].insert(value, at: indexPath.row)
+            }
+            return
+        }
+        items[0].insert(value, at: indexPath.row)
+//        items[indexPath.section].insert(value, at: indexPath.row)
     }
 }

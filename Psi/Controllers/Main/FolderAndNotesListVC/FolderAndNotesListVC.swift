@@ -29,6 +29,23 @@ class FolderAndNotesListVC: BaseVC {
     var isLongPressOnTipView = false
     var store = MTStore()
     
+    var storeDataInUserDefalut = true
+    var storedArray: [[Any]]?
+    
+    var array: [[Any]]? {
+        set {
+            self.storedArray = newValue
+            if self.storeDataInUserDefalut {
+                self.saveData(array: newValue, storeInFolderID: self.folderVM?.folderId ?? 0)
+            } else {
+                self.storeDataInUserDefalut = true
+            }
+        }
+        get {
+            return self.storedArray
+        }
+    }
+    
     override func setupGUI() {
         // Start Up
         initialSetup()
@@ -53,6 +70,8 @@ extension FolderAndNotesListVC {
     fileprivate func initialSetup() {
         tableView.backgroundView = nil
         tableView.backgroundColor = .clear
+        tableView.isEditing = true
+        tableView.allowsSelectionDuringEditing = true
         tableView.register(FolderCell.self)
 //        store.setBool(false, key: .isTipViewHide)
 
@@ -130,28 +149,51 @@ extension FolderAndNotesListVC {
     }
     
     fileprivate func deleteButtonPressed(_ indexPath: IndexPath) {
-        if indexPath.section == 0 {
-            // Delete Folder
-            self.deleteFolder(index: indexPath.row)
-            return
+        guard let items = self.array else { return }
+        if self.getIsFolder(indexPath: indexPath) {
+            let index = indexPath.row// - items[0].count
+            self.deleteFolder(index: index)//-1)
         }
-        
         self.deleteNote(index: indexPath.row)
+        return
+        
+//        if indexPath.section == 0 {
+////        if (((self.array as? [[Any]])?[indexPath.section][indexPath.row] as? FolderViewModel) != nil) {
+//            // Delete Folder
+//            self.deleteFolder(index: indexPath.row)
+//            return
+//        }
+//
+//        self.deleteNote(index: indexPath.row)
     }
     
     fileprivate func setupData() {
-        
-        let array = [folderListVM.folderList, noteListVM.notesList] as Any
-        
-        folderDataSource = FolderAndNotesDataSource(tableView: tableView, array: array as! [[Any]])
+//        let array = self.array != nil ? self.array as Any : [folderListVM.folderList, noteListVM.notesList] as Any
+//        let array = [folderListVM.folderList, noteListVM.notesList] as Any
+//        folderDataSource = FolderAndNotesDataSource(tableView: tableView, array: array as! [[Any]])
+        let array = self.loadData(storeInFolderID: self.folderVM?.folderId ?? 0)
+        self.storeDataInUserDefalut = false
+        self.array = array
+        folderDataSource = FolderAndNotesDataSource(tableView: tableView, array: array ?? [])
+        folderDataSource?.delegate = self
+        notesDataSource?.delegate = self
         folderDataSource?.actionsProxy.on(.didSelect, handler: { (indexPath) in
-            
-            if indexPath.section == 0 {
-                self.loadFolderAndNotesListVC(folderVM: self.folderListVM.folderList[indexPath.row], isHomeScreen: false)
+            if self.getIsFolder(indexPath: indexPath) {
+                if let folder = self.getFolder(indexPath: indexPath, arrayItems: nil) {
+                    self.loadFolderAndNotesListVC(folderVM: folder, isHomeScreen: false)
+                }
                 return
             }
+            if let note = self.getNote(indexPath: indexPath, arrayItems: nil) {
+                self.loadNoteDetailVC(noteVM: note, noteListVM: self.noteListVM)
+            }
             
-            self.loadNoteDetailVC(noteVM: self.noteListVM.notesList[indexPath.row], noteListVM: self.noteListVM)
+//            if indexPath.section == 0 {
+//                self.loadFolderAndNotesListVC(folderVM: self.folderListVM.folderList[indexPath.row], isHomeScreen: false)
+//                return
+//            }
+//
+//            self.loadNoteDetailVC(noteVM: self.noteListVM.notesList[indexPath.row], noteListVM: self.noteListVM)
         })
         .on(.swipeToEdit, handler: { (indexPath) in
             print("Edit")
@@ -166,20 +208,44 @@ extension FolderAndNotesListVC {
     }
     
     fileprivate func editButtonPressed(_ indexPath: IndexPath) {
-        if indexPath.section == 0 {
+//        if let folderModel = self.array?[indexPath.section][indexPath.row] as? FolderViewModel {
+//            self.createOrUpdateFolderNameAlert(isEditing: true, index: indexPath.row)
+//            return
+//        } else if let noteModel = self.array?[indexPath.section][indexPath.row] as? NoteViewModel {
+//            self.loadCreateOrUpdateNoteVC(isEditing: true, noteVM: self.noteListVM.notesList[indexPath.row], folderId: self.folderVM?.folderId ?? 0, notesListVM: noteListVM)
+//            return
+//        }
+        
+//        if indexPath.section == 0 {
+        if self.getIsFolder(indexPath: indexPath) {
             self.createOrUpdateFolderNameAlert(isEditing: true, index: indexPath.row)
             return
         }
-        
-        self.loadCreateOrUpdateNoteVC(isEditing: true, noteVM: self.noteListVM.notesList[indexPath.row], folderId: self.folderVM?.folderId ?? 0, notesListVM: noteListVM)
+        var index = 0
+        let arrInd = self.array?.count ?? 0 > 1 ? 1 : 0
+        let data = self.array?[arrInd][indexPath.row] as? NoteViewModel
+        if let ind = self.noteListVM.notesList.firstIndex(where: {$0.itemId == data?.itemId}) {
+            index = ind
+        }
+        self.loadCreateOrUpdateNoteVC(isEditing: true, noteVM: self.noteListVM.notesList[index], folderId: self.folderVM?.folderId ?? 0, notesListVM: noteListVM)
     }
     
     fileprivate func createOrUpdateFolderNameAlert(isEditing: Bool = false, index: Int = 0) {
         let alertController = UIAlertController(title: isEditing ? "Update Folder" : "Create New Folder", message: "", preferredStyle: .alert)
         alertController.addTextField { (textField : UITextField!) -> Void in
             textField.placeholder = "Folder name"
-            
-            textField.text = isEditing ? self.folderListVM.folderList[index].menuName : ""
+//            textField.text = isEditing ? self.folderListVM.folderList[index].menuName : ""
+            if isEditing {
+                var indd = 0
+                let arrInd = self.array?.count ?? 0 > 1 ? 1 : 0
+                let data = self.array?[arrInd][index] as? FolderViewModel
+                if let i = self.folderListVM.folderList.firstIndex(where: {$0.folderId == data?.folderId}) {
+                    indd = i
+                }
+                textField.text = self.folderListVM.folderList[indd].menuName
+            } else {
+                textField.text = ""
+            }
         }
         
         let saveAction = UIAlertAction(title: "Save", style: .default, handler: { alert -> Void in
@@ -259,8 +325,17 @@ extension FolderAndNotesListVC {
             }
             print(indexPath)
             AppManager.shared.selectedOption = .copy
+
+            if let folderModel = self.array?[indexPath.section][indexPath.row] as? FolderViewModel {
+                AppManager.shared.selectedFolder = folderModel
+                return
+            } else if let noteModel = self.array?[indexPath.section][indexPath.row] as? NoteViewModel {
+                AppManager.shared.selectedNote = noteModel
+                return
+            }
             
-            if indexPath.section == 0 {
+//            if indexPath.section == 0 {
+            if self.getIsFolder(indexPath: indexPath) {
                 AppManager.shared.selectedFolder = folderListVM.folderList[indexPath.row]
                 return
             }
@@ -274,7 +349,16 @@ extension FolderAndNotesListVC {
             print(indexPath)
             AppManager.shared.selectedOption = .cut
 
-            if indexPath.section == 0 {
+            if let folderModel = self.array?[indexPath.section][indexPath.row] as? FolderViewModel {
+                AppManager.shared.selectedFolder = folderModel
+                return
+            } else if let noteModel = self.array?[indexPath.section][indexPath.row] as? NoteViewModel {
+                AppManager.shared.selectedNote = noteModel
+                return
+            }
+            
+//            if indexPath.section == 0 {
+            if self.getIsFolder(indexPath: indexPath) {
                 AppManager.shared.selectedFolder = folderListVM.folderList[indexPath.row]
                 return
             }
@@ -302,9 +386,9 @@ extension FolderAndNotesListVC {
             }
             
             var index: Int?
-            if pastIndexPath?.section == 1 {
+//            if pastIndexPath?.section == 1 {
                 index = pastIndexPath?.row
-            }
+//            }
 
             pasteNote(at: index)
         case .edit:
@@ -403,6 +487,14 @@ extension FolderAndNotesListVC {
             var folders = self.folderListVM.folderList
             folders.append(contentsOf: foldersList)
             self.folderListVM.updateFolderList(folders: folders)
+            
+            if var array = self.array {
+//                let index = array.count-1
+                let index = array.count > 1 ? 1 : 0
+                array[index].append(contentsOf: foldersList)
+                self.array = array
+            }
+            
             self.setupData()
         }
     }
@@ -427,12 +519,34 @@ extension FolderAndNotesListVC {
     }
     
     fileprivate func deleteFolder(index: Int) {
-        var folderVM = self.folderListVM.folderList[index]
-        folderVM.indecatorDelegate = self
-        folderVM.deleteFolder {
-            self.folderListVM.folderList.remove(at: index)
-            self.setupData()
+        var folder: FolderViewModel?
+        var array = self.array ?? []
+        let ind = array.count > 1 ? 1 : 0//array.count-1
+        if let data = array[ind][index/*+1*/] as? FolderViewModel {
+            folder = data
         }
+        
+        if let fol = folder {
+            if let listindex = self.folderListVM.folderList.firstIndex(of: fol) {
+                var folderVM = self.folderListVM.folderList[listindex]
+                folderVM.indecatorDelegate = self
+                folderVM.deleteFolder {
+                    self.folderListVM.folderList.remove(at: listindex)
+                    
+                    array[ind].remove(at: index/*+1*/)
+                    self.array = array
+                    
+                    self.setupData()
+                }
+            }
+        }
+        
+//        var folderVM = self.folderListVM.folderList[index]
+//        folderVM.indecatorDelegate = self
+//        folderVM.deleteFolder {
+//            self.folderListVM.folderList.remove(at: index)
+//            self.setupData()
+//        }
     }
     
     fileprivate func pasteFolder(at index: Int?) {
@@ -452,23 +566,57 @@ extension FolderAndNotesListVC {
         
 //        var folderVM = FolderViewModel()
         folderListVM.indecatorDelegate = self
-        folderListVM.moveFolder(at: index, parentFolderID: self.folderVM?.folderId) { (foldersList) in
+        folderListVM.moveFolder(at: index, parentFolderID: self.folderVM?.folderId, array: self.array) { (foldersList) in
+//        folderListVM.moveFolder(at: index, parentFolderID: self.folderVM?.folderId) { (foldersList) in
             AppManager.shared.selectedFolder = nil
             AppManager.shared.selectedOption = nil
             self.folderListVM.updateFolderList(folders: foldersList)
             self.setupData()
 //            self.folderListVM.folderList.append(folderVM)
 //            self.setupData()
+        } updatedArray: { (array) in
+            self.array = array
+            self.setupData()
         }
     }
 
     fileprivate func deleteNote(index: Int) {
-        var noteVM = self.noteListVM.notesList[index]
-        noteVM.indecatorDelegate = self
-        noteVM.deleteNote {
-            self.noteListVM.notesList.remove(at: index)
-            self.setupData()
+        var note: NoteViewModel?
+        var array = self.array ?? []
+        let ind = array.count > 1 ? 1 : 0//array.count-1
+        if let data = array[ind][index/*+1*/] as? NoteViewModel {
+            note = data
         }
+        
+        if let no = note {
+            if let listindex = self.noteListVM.notesList.firstIndex(of: no) {
+                var noteVM = self.noteListVM.notesList[listindex]
+                noteVM.indecatorDelegate = self
+                noteVM.deleteNote {
+                    self.noteListVM.notesList.remove(at: listindex)
+                    
+                    array[ind].remove(at: index/*+1*/)
+                    self.array = array
+                    
+                    self.setupData()
+                }
+            }
+        }
+        
+        
+//        var noteVM = self.noteListVM.notesList[index]
+//        noteVM.indecatorDelegate = self
+//        noteVM.deleteNote {
+//            self.noteListVM.notesList.remove(at: index)
+//
+//            if var array = self.array as? [[Any]] {
+//                let ind = array.count-1
+//                array[ind].remove(at: index+1)
+//                self.array = array
+//            }
+//
+//            self.setupData()
+//        }
     }
     
     fileprivate func pasteNote(at index: Int?) {
@@ -484,10 +632,14 @@ extension FolderAndNotesListVC {
         
 //        var noteVM = NoteViewModel()
         noteListVM.indecatorDelegate = self
-        noteListVM.moveNote(at: index, toFolderId: self.folderVM?.folderId) { (notes) in
+//        noteListVM.moveNote(at: index, toFolderId: self.folderVM?.folderId) { (notes) in
+        noteListVM.moveNote(at: index, toFolderId: self.folderVM?.folderId, array: self.array) { (notes) in
             AppManager.shared.selectedNote = nil
             AppManager.shared.selectedOption = nil
-            self.noteCreated(notes)
+            self.noteCreated(notes, newlyAdded: notes)
+        } updatedArray: { (array) in
+            self.array = array
+            self.setupData()
         }
     }
     
@@ -500,7 +652,7 @@ extension FolderAndNotesListVC {
         noteListVM.createNote(note: noteVM) { notesList in
             var notes = self.noteListVM.notesList
             notes.append(contentsOf: notesList)
-            self.noteCreated(notes)
+            self.noteCreated(notes, newlyAdded: notesList)
             AppManager.shared.selectedNote = nil
             AppManager.shared.selectedOption = nil
         }
@@ -522,15 +674,30 @@ extension FolderAndNotesListVC: IndecatorDelegate {
 // MARK: - CreateOrUpdateNoteVCDelegate
 extension FolderAndNotesListVC: CreateOrUpdateNoteVCDelegate {
 
-    func noteCreated(_ notes: [NoteViewModel]) {
+    func noteCreated(_ notes: [NoteViewModel], newlyAdded: [NoteViewModel]) {
 //        self.noteListVM.notesList.append(noteVM)
         self.noteListVM.notesList = notes
+        
+        if var array = self.array {
+//            let index = array.count-1
+            let index = array.count > 1 ? 1 : 0
+            array[index].append(contentsOf: newlyAdded)
+            self.array = array
+        }
+        
         self.setupData()
     }
     
-    func noteUpdated(_ notes: [NoteViewModel]) {
+    func noteUpdated(_ notes: [NoteViewModel], newlyAdded: NoteViewModel) {
         self.noteListVM.notesList = notes
 
+        if var array = self.array {
+//            let index = array.count-1
+            let index = array.count > 1 ? 1 : 0
+            array[index].append(newlyAdded)
+            self.array = array
+        }
+        
 //        guard let index = self.noteListVM.notesList.firstIndex(where: {$0.itemId == noteVM.itemId}) else {
 //            return
 //        }
@@ -539,10 +706,128 @@ extension FolderAndNotesListVC: CreateOrUpdateNoteVCDelegate {
     }
     
     func deleteNote(_ noteVM: NoteViewModel) {
-        guard let index = self.noteListVM.notesList.firstIndex(where: {$0.itemId == noteVM.itemId}) else {
-            return
+//        guard var index = self.noteListVM.notesList.firstIndex(where: {$0.itemId == noteVM.itemId}) else {
+//            return
+//        }
+        var index = 0
+        
+        if let array = self.array {
+            for arr in array {
+                for (ind, ar) in arr.enumerated() {
+                    if let note = ar as? NoteViewModel {
+                        if note.itemId == noteVM.itemId {
+                            index = ind
+                        }
+                    }
+                }
+            }
         }
         
         self.deleteNote(index: index)
+    }
+    
+    func saveData(array: [[Any]]?, storeInFolderID: Int64 = 0) {
+        let key = getSwappedDataUserDefaultKey(inFolder: storeInFolderID)
+        if let mainData = MainFolderNoteModelModel.converDataToStruct(array: array) {
+            UserDefaults.standard.setStructArray(mainData, forKey: key)
+        }
+    }
+    
+    func loadData(storeInFolderID: Int64 = 0) -> [[Any]]? {
+        let key = getSwappedDataUserDefaultKey(inFolder: storeInFolderID)
+        let mainData = MainFolderNoteModelModel()
+        if UserDefaults.standard.value(forKey: key) != nil {
+            let arrOfDetail = UserDefaults.standard.structArrayData(MainFolderNoteModelModel.self, forKey: key)
+            let data = mainData.getDataFromUserDefaults(mainModels: arrOfDetail)
+            self.storeDataInUserDefalut = false
+            self.array = data
+        }
+        
+        var arrayTotalDataCount = 0
+        let otherData = [folderListVM.folderList, noteListVM.notesList] as [[Any]]
+        let otherDataCount = otherData[0].count + otherData[1].count
+        
+        if let array = self.array {
+            if array.count > 1 {
+                arrayTotalDataCount = array[0].count+array[1].count
+                if arrayTotalDataCount == otherDataCount {
+                    return array
+                }
+            } else if array.count > 0 {
+                arrayTotalDataCount = array[0].count
+                if arrayTotalDataCount == otherDataCount {
+                    return array
+                }
+            }
+        }
+        
+        if otherData.count > 1 {
+            var fol = otherData[0]
+            let note = otherData[1]
+            let pass = fol+note
+            return [pass]
+        } else if otherData.count > 0 {
+            let fol = otherData[0]
+            return [fol]
+        }
+        return []
+    }
+    
+//    func getIsFolder(indexPath: IndexPath) -> Bool {
+//        guard let items = self.array as? [[Any]] else { return true }
+//        guard indexPath.section >= 0 &&
+//            indexPath.section < items.count &&
+//            indexPath.row >= 0 &&
+//            indexPath.row < items[indexPath.section].count
+//        else {
+//            return false
+//        }
+//        return true
+//
+////        if indexPath.section == 0 {
+////            return true
+////        }
+////        return false
+//    }
+    
+    func getIsFolder(indexPath: IndexPath) -> Bool {
+        guard let items = self.array else { return true }
+        if ((items[indexPath.section][indexPath.row] as? FolderViewModel) != nil) {
+            return true
+        } else if ((items[indexPath.section][indexPath.row] as? NoteViewModel) != nil) {
+            return false
+        }
+        return true
+//        if indexPath.section == 0 {
+//            return true
+//        }
+//        return false
+    }
+    
+    func getFolder(indexPath: IndexPath, arrayItems: [[Any]]?) -> FolderViewModel? {
+        let items = arrayItems != nil ? arrayItems! : self.array ?? []
+        if items.count > 0 {
+            if let folder = items[indexPath.section][indexPath.row] as? FolderViewModel {
+                return folder
+            }
+        }
+        return nil
+    }
+    
+    func getNote(indexPath: IndexPath, arrayItems: [[Any]]?) -> NoteViewModel? {
+        let items = arrayItems != nil ? arrayItems! : self.array ?? []
+        if items.count > 0 {
+            if let note = items[indexPath.section][indexPath.row] as? NoteViewModel {
+                return note
+            }
+        }
+        return nil
+    }
+}
+
+extension FolderAndNotesListVC: ItemsOrderChangedDelegate {
+    func itemsOrderChanged(provider: Any?) {
+        let items = (provider as? ArrayDataProvider<Any>)?.items
+        self.array = items
     }
 }

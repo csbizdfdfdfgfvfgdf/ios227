@@ -27,6 +27,8 @@ class FolderModel: Codable {
         case userType
     }
     
+    init() {}
+    
     required init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         menuId = try values.decodeIfPresent(Int64.self, forKey: .menuId)

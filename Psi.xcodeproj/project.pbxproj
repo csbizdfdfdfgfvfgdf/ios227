@@ -74,6 +74,7 @@
 		2DA1E7412593864100C94F70 /* FolderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA1E7402593864100C94F70 /* FolderViewModel.swift */; };
 		2DA1E744259386CA00C94F70 /* FolderListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA1E743259386CA00C94F70 /* FolderListViewModel.swift */; };
 		6F8E92A869C60D03A7ADE4A5 /* Pods_Psi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E799F1868C6479CBD2FB142 /* Pods_Psi.framework */; };
+		7A549A1425F74C8500304CA3 /* SwapHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A549A1325F74C8500304CA3 /* SwapHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -146,6 +147,7 @@
 		2DA1E7402593864100C94F70 /* FolderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderViewModel.swift; sourceTree = "<group>"; };
 		2DA1E743259386CA00C94F70 /* FolderListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderListViewModel.swift; sourceTree = "<group>"; };
 		4A66E1056286DABF61D194B3 /* Pods-Psi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Psi.debug.xcconfig"; path = "Target Support Files/Pods-Psi/Pods-Psi.debug.xcconfig"; sourceTree = "<group>"; };
+		7A549A1325F74C8500304CA3 /* SwapHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapHelper.swift; sourceTree = "<group>"; };
 		9E799F1868C6479CBD2FB142 /* Pods_Psi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Psi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC622C61E3C05F2CEB6608CF /* Pods-Psi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Psi.release.xcconfig"; path = "Target Support Files/Pods-Psi/Pods-Psi.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -294,6 +296,7 @@
 				2D9454FA258A54CC00A5E7FD /* Extensions */,
 				2D945500258A54CC00A5E7FD /* Helping Methods */,
 				2DA1E719259230D200C94F70 /* Protocols */,
+				7A549A1625F74E8400304CA3 /* SwapHelper */,
 			);
 			path = Helper;
 			sourceTree = "<group>";
@@ -534,6 +537,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		7A549A1625F74E8400304CA3 /* SwapHelper */ = {
+			isa = PBXGroup;
+			children = (
+				7A549A1325F74C8500304CA3 /* SwapHelper.swift */,
+			);
+			path = SwapHelper;
+			sourceTree = "<group>";
+		};
 		C0267F9C0FDEB3599410524A /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -693,6 +704,7 @@
 				2D94550E258A54CC00A5E7FD /* CONSTANT.swift in Sources */,
 				2D9454C5258A533800A5E7FD /* AppDelegate.swift in Sources */,
 				2DA1E71725922F9800C94F70 /* UserViewModel.swift in Sources */,
+				7A549A1425F74C8500304CA3 /* SwapHelper.swift in Sources */,
 				2D945513258A54CC00A5E7FD /* MTStore.swift in Sources */,
 				2D94551C258A54CC00A5E7FD /* Services.swift in Sources */,
 				2DA1E73A2593786600C94F70 /* ResponseModel.swift in Sources */,

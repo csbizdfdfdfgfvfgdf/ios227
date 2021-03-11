@@ -17,4 +17,5 @@ public protocol CollectionDataProvider {
 
     func updateItem(at indexPath: IndexPath, value: T)
     func removeItem(at indexPath: IndexPath)
+    func insertItem(at indexPath: IndexPath, value: T)
 }
